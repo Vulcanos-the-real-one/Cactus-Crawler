@@ -19,7 +19,10 @@ body {
   position: relative;
 }
 
-img { image-rendering: pixelated; image-rendering: crisp-edges; }
+img {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
 
 /* Partikel Canvas im Hintergrund */
 #particle-canvas {
@@ -55,7 +58,11 @@ img { image-rendering: pixelated; image-rendering: crisp-edges; }
   background: #0b0c10;
   border-bottom: 4px solid #45a29e;
 }
-#topbar h1 { font-size: 0.8rem; color: #66fcf1; text-shadow: 2px 2px 0 #000; }
+#topbar h1 {
+  font-size: 0.8rem;
+  color: #66fcf1;
+  text-shadow: 2px 2px 0 #000;
+}
 .icon-btn {
   background: #1f2833;
   border: 3px solid #45a29e;
@@ -65,7 +72,9 @@ img { image-rendering: pixelated; image-rendering: crisp-edges; }
   cursor: pointer;
   border-radius: 0;
 }
-.icon-btn:active { transform: scale(0.9); }
+.icon-btn:active {
+  transform: scale(0.9);
+}
 
 /* Floating Text FX */
 .floating-text {
@@ -83,7 +92,9 @@ img { image-rendering: pixelated; image-rendering: crisp-edges; }
 }
 
 /* Screen Shake */
-.shake { animation: shake 0.12s ease-in-out 2; }
+.shake {
+  animation: shake 0.12s ease-in-out 2;
+}
 @keyframes shake {
   0% { transform: translate(0, 0); }
   25% { transform: translate(-6px, 4px); }
@@ -121,8 +132,15 @@ img { image-rendering: pixelated; image-rendering: crisp-edges; }
   border: 3px solid #1f2833;
   margin-bottom: 8px;
 }
-#monster-name { font-size: 0.65rem; margin-bottom: 6px; color: #ff6b81; }
-#monster-info p { font-size: 0.6rem; margin-top: 4px; }
+#monster-name {
+  font-size: 0.65rem;
+  margin-bottom: 6px;
+  color: #ff6b81;
+}
+#monster-info p {
+  font-size: 0.6rem;
+  margin-top: 4px;
+}
 
 .hp-bar-container {
   width: 100%;
@@ -140,16 +158,30 @@ img { image-rendering: pixelated; image-rendering: crisp-edges; }
   transition: width 0.15s ease-out;
 }
 
-/* ARENA — bewegliche Dungeon-Fläche */
+/* ARENA — Dungeon-Raum */
 #arena {
   position: relative;
   width: 100%;
   height: 200px;
-  background:
-    repeating-linear-gradient(45deg, #16202b 0 10px, #121a23 10px 20px);
+  background: repeating-linear-gradient(45deg, #16202b 0 10px, #121a23 10px 20px);
   border: 3px solid #0b0c10;
   overflow: hidden;
   touch-action: none;
+}
+
+.dungeon-room {
+  border-top: 8px solid #0b0c10 !important;
+}
+
+.room-door {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 8px;
+  background: #f1c40f;
+  box-shadow: 0 0 8px #f1c40f;
 }
 
 #player-entity, #monster-entity {
@@ -172,9 +204,13 @@ img { image-rendering: pixelated; image-rendering: crisp-edges; }
   cursor: pointer;
   filter: drop-shadow(0 0 8px rgba(255, 71, 87, 0.5));
 }
-#monster-entity.hit-flash img { filter: brightness(2.5) drop-shadow(3px 3px 0 rgba(0,0,0,0.6)); }
+#monster-entity.hit-flash img {
+  filter: brightness(2.5) drop-shadow(3px 3px 0 rgba(0,0,0,0.6));
+}
 
-#player-entity.flip img { transform: scaleX(-1); }
+#player-entity.flip img {
+  transform: scaleX(-1);
+}
 
 #range-hint {
   position: absolute;
@@ -189,18 +225,27 @@ img { image-rendering: pixelated; image-rendering: crisp-edges; }
   z-index: 5;
 }
 
-.crate {
+/* Raum-Kiste oben mittig */
+.room-chest {
   position: absolute;
-  width: 34px;
-  height: 34px;
+  top: 15px !important;
+  left: calc(50% - 20px) !important;
+  width: 40px !important;
+  height: 40px !important;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
   cursor: pointer;
   animation: crateBob 1.2s ease-in-out infinite;
   filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.6));
+  z-index: 4;
 }
+.room-chest img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 @keyframes crateBob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
@@ -263,6 +308,17 @@ img { image-rendering: pixelated; image-rendering: crisp-edges; }
   font-weight: bold;
   font-size: 0.65rem;
   border: 3px solid #45a29e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.icon-img {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  object-fit: contain;
 }
 
 #active-character-bar {
@@ -338,13 +394,23 @@ img { image-rendering: pixelated; image-rendering: crisp-edges; }
   text-align: center;
   border: 3px solid #333;
 }
-.gamble-box h4 { font-size: 0.6rem; margin-bottom: 8px; }
+.gamble-box h4 {
+  font-size: 0.6rem;
+  margin-bottom: 8px;
+}
 
 #slot-display {
-  font-size: 1.4rem;
-  letter-spacing: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
   margin: 8px 0;
-  color: #f1c40f;
+}
+
+#slot-display img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
 }
 
 /* Inventar */
@@ -361,19 +427,45 @@ img { image-rendering: pixelated; image-rendering: crisp-edges; }
   border: 3px solid #45a29e;
   padding: 8px;
 }
-.inv-card.equipped { border-color: #66fcf1; box-shadow: 0 0 10px rgba(102,252,241,0.4); }
-.inv-card.locked { border-color: #333; opacity: 0.6; }
+.inv-card.equipped {
+  border-color: #66fcf1;
+  box-shadow: 0 0 10px rgba(102,252,241,0.4);
+}
+.inv-card.locked {
+  border-color: #333;
+  opacity: 0.6;
+}
+.inv-card.locked .inv-img {
+  filter: brightness(0);
+}
 .inv-img {
   width: 44px;
   height: 44px;
   object-fit: contain;
   flex-shrink: 0;
 }
-.inv-info { flex: 1; min-width: 0; }
-.inv-name { font-size: 0.6rem; margin-bottom: 4px; color: #66fcf1; }
-.inv-card.locked .inv-name { color: #777; }
-.inv-ability { font-size: 0.5rem; color: #9fb3bf; line-height: 1.5; margin-bottom: 4px; }
-.inv-stats { font-size: 0.5rem; color: #f1c40f; }
+.inv-info {
+  flex: 1;
+  min-width: 0;
+}
+.inv-name {
+  font-size: 0.6rem;
+  margin-bottom: 4px;
+  color: #66fcf1;
+}
+.inv-card.locked .inv-name {
+  color: #777;
+}
+.inv-ability {
+  font-size: 0.5rem;
+  color: #9fb3bf;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+.inv-stats {
+  font-size: 0.5rem;
+  color: #f1c40f;
+}
 .inv-equip-btn {
   flex-shrink: 0;
   width: 74px;
@@ -399,19 +491,31 @@ img { image-rendering: pixelated; image-rendering: crisp-edges; }
 .btn-gold { background: #f1c40f; color: #000; }
 .btn-purple { background: #9b59b6; color: #fff; }
 
-.btn-action:disabled { opacity: 0.3; cursor: not-allowed; }
-.btn-action:active:not(:disabled) { transform: scale(0.97); }
+.btn-action:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.btn-action:active:not(:disabled) {
+  transform: scale(0.97);
+}
 
 /* Random Event */
 #random-event-item {
   position: absolute;
-  font-size: 2.2rem;
   cursor: pointer;
   z-index: 99;
   animation: fly 4s linear infinite;
 }
 
-.hidden { display: none !important; }
+#random-event-item img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.hidden {
+  display: none !important;
+}
 
 @keyframes fly {
   0% { top: 20%; left: -60px; }
