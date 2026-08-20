@@ -1,5 +1,5 @@
 // =========================================================
-// CACTUSCRAWLER — Kern-Logik (Räume & Level-Unlocks)
+// CACTUSCRAWLER — Kern-Logik (Kakteen als PNG / Monster als Emojis)
 // =========================================================
 
 // ---------- WÄHRUNGEN & FORTSCHRITT ----------
@@ -7,8 +7,7 @@ let water = 0;
 let gold = 0;
 let floor = 1;
 
-// ---------- KAKTUS-CHARAKTERE ----------
-// Unlocks sind an die Dungeon-Ebene gekoppelt
+// ---------- KAKTUS-CHARAKTERE (Mit PNG-Bildpfaden) ----------
 const CHARACTERS = {
   basis: {
     id: 'basis', name: 'Basis-Kaktus', img: 'assets/cactus.png',
@@ -34,7 +33,7 @@ const CHARACTERS = {
   fire: {
     id: 'fire', name: 'Feuer-Kaktus', img: 'assets/fire_cactus.png',
     unlocked: false, reqFloor: 35, ability: 'burn', abilityName: 'Verbrennen 🔥',
-    abilityDesc: '30% Chance, dem Monster einen Brand zuzufügen.',
+    abilityDesc: '30% Chance, dem Monster einen Brand zufügen.',
     waterPerClick: 1, waterUpgradeCost: 10,
     cactusPower: 1, powerUpgradeCost: 15
   }
@@ -42,17 +41,17 @@ const CHARACTERS = {
 let activeCharacterId = 'basis';
 function getActive() { return CHARACTERS[activeCharacterId]; }
 
-// ---------- MONSTER DATENBANK ----------
+// ---------- MONSTER DATENBANK (Als Emojis) ----------
 const MONSTER_TYPES = [
-  { name: "Wüsten-Schnecke", hp: 25, goldReward: 15, emoji: "🐌" },
-  { name: "Stein-Golem", hp: 60, goldReward: 35, emoji: "🗿" },
-  { name: "Schatten-Drache", hp: 150, goldReward: 100, emoji: "🐉" }
+  { name: "Wüsten-Schnecke", emoji: "🐌", hpMul: 1.0, goldMul: 1.0 },
+  { name: "Stein-Golem", emoji: "🗿", hpMul: 1.5, goldMul: 1.4 },
+  { name: "Schatten-Drache", emoji: "🐉", hpMul: 2.2, goldMul: 2.0 },
+  { name: "Wüsten-Dämon (BOSS)", emoji: "👹", hpMul: 3.5, goldMul: 3.5 }
 ];
 let currentMonster = MONSTER_TYPES[0];
 let monsterMaxHp = 20;
 let monsterHp = 20;
 let monsterInstanceId = 0;
-let roomChestActive = false; // Kiste erscheint nach Monster-Sieg
 
 // ---------- DOM ELEMENTE ----------
 const waterEl = document.getElementById('water');
@@ -84,6 +83,27 @@ const soundToggleBtn = document.getElementById('sound-toggle-btn');
 const activeCharNameEl = document.getElementById('active-char-name');
 const activeCharAbilityEl = document.getElementById('active-char-ability');
 const inventoryList = document.getElementById('inventory-list');
+
+// Hilfsfunktion: Wandelt ein <img> visuell in ein Emoji-Text-Feld um (für Monster)
+function setMonsterEmoji(el, emojiStr) {
+  if (!el) return;
+  if (el.tagName === 'IMG') {
+    let span = el.nextElementSibling;
+    if (!span || !span.classList.contains('emoji-fallback')) {
+      span = document.createElement('span');
+      span.className = 'emoji-fallback';
+      el.parentNode.insertBefore(span, el.nextSibling);
+      el.style.display = 'none';
+    }
+    span.textContent = emojiStr;
+    span.style.fontSize = "4rem";
+    span.style.userSelect = 'none';
+    span.style.display = 'inline-block';
+  } else {
+    el.textContent = emojiStr;
+    el.style.fontSize = "4rem";
+  }
+}
 
 // ---------- CANVAS PARTIKEL-SYSTEM ----------
 const canvas = document.getElementById('particle-canvas');
@@ -247,20 +267,23 @@ const joystickKnob = document.getElementById('joystick-knob');
 const joystick = { active: false, x: 0, y: 0, radius: 40 };
 let joystickCenter = { x: 0, y: 0 };
 
-joystickBase.addEventListener('pointerdown', (e) => {
-  joystick.active = true;
-  joystickBase.setPointerCapture(e.pointerId);
-  const rect = joystickBase.getBoundingClientRect();
-  joystickCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-  updateJoystick(e);
-});
-joystickBase.addEventListener('pointermove', (e) => { if (joystick.active) updateJoystick(e); });
+if (joystickBase) {
+  joystickBase.addEventListener('pointerdown', (e) => {
+    joystick.active = true;
+    joystickBase.setPointerCapture(e.pointerId);
+    const rect = joystickBase.getBoundingClientRect();
+    joystickCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    updateJoystick(e);
+  });
+  joystickBase.addEventListener('pointermove', (e) => { if (joystick.active) updateJoystick(e); });
+  joystickBase.addEventListener('pointerup', resetJoystick);
+  joystickBase.addEventListener('pointercancel', resetJoystick);
+}
+
 function resetJoystick() {
   joystick.active = false; joystick.x = 0; joystick.y = 0;
-  joystickKnob.style.transform = 'translate(0px, 0px)';
+  if (joystickKnob) joystickKnob.style.transform = 'translate(0px, 0px)';
 }
-joystickBase.addEventListener('pointerup', resetJoystick);
-joystickBase.addEventListener('pointercancel', resetJoystick);
 
 function updateJoystick(e) {
   let dx = e.clientX - joystickCenter.x;
@@ -269,7 +292,7 @@ function updateJoystick(e) {
   const angle = Math.atan2(dy, dx);
   dx = Math.cos(angle) * dist;
   dy = Math.sin(angle) * dist;
-  joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+  if (joystickKnob) joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
   joystick.x = dx / joystick.radius;
   joystick.y = dy / joystick.radius;
 }
@@ -297,8 +320,10 @@ function gameLoop(now) {
     player.facingLeft = vx < -0.1 ? true : (vx > 0.1 ? false : player.facingLeft);
   }
 
-  playerEntity.style.transform = `translate(${player.x}px, ${player.y}px)`;
-  playerEntity.classList.toggle('flip', player.facingLeft);
+  if (playerEntity) {
+    playerEntity.style.transform = `translate(${player.x}px, ${player.y}px)`;
+    playerEntity.classList.toggle('flip', player.facingLeft);
+  }
 
   requestAnimationFrame(gameLoop);
 }
@@ -309,13 +334,16 @@ function getMonsterPixelPos() {
   return { x: monsterRatio.x * (arenaRect.width - 56), y: monsterRatio.y * (arenaRect.height - 56) };
 }
 function positionMonster() {
+  if (!monsterEntity) return;
   const pos = getMonsterPixelPos();
   monsterEntity.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
 }
 window.addEventListener('resize', positionMonster);
 
 // ---------- KAMPF ----------
-monsterEntity.addEventListener('pointerdown', (e) => { e.stopPropagation(); tryAttack(); });
+if (monsterEntity) {
+  monsterEntity.addEventListener('pointerdown', (e) => { e.stopPropagation(); tryAttack(); });
+}
 
 function tryAttack() {
   if (monsterHp <= 0) return;
@@ -386,7 +414,7 @@ function dealDamage(amount, x, y, isDot = false) {
     createFloatingText(x, y - 30, `+${reward} GOLD! 🪙`, '#f1c40f');
     sfx.death();
 
-    // Raum geklärt -> Belohnungskiste oben freischalten
+    // Raum geklärt -> Belohnungskiste freischalten
     spawnRoomChest();
   }
   updateUI();
@@ -404,7 +432,8 @@ function spawnMonster() {
     monsterBadge.textContent = "Raum " + floor;
   }
 
-  monsterImg.src = currentMonster.img;
+  // Monster-Emoji statt Bild setzen
+  setMonsterEmoji(monsterImg, currentMonster.emoji);
   monsterName.textContent = currentMonster.name;
 
   monsterMaxHp = Math.floor(20 * Math.pow(1.28, floor - 1) * currentMonster.hpMul);
@@ -414,16 +443,14 @@ function spawnMonster() {
   positionMonster();
 }
 
-// ---------- RAUM-KISTE ----------
+// ---------- RAUM-KISTE (Emoji-Kiste) ----------
 function spawnRoomChest() {
   cratesLayer.innerHTML = '';
   const crate = document.createElement('div');
   crate.className = 'crate room-chest';
-  
-  const crateImg = document.createElement('img');
-  crateImg.src = 'assets/chest.png';
-  crateImg.alt = 'Kiste';
-  crate.appendChild(crateImg);
+  crate.style.fontSize = '3rem';
+  crate.style.cursor = 'pointer';
+  crate.textContent = '📦';
 
   crate.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
@@ -480,7 +507,7 @@ upgradePowerBtn.addEventListener('click', () => {
   }
 });
 
-// ---------- INVENTAR ----------
+// ---------- INVENTAR (Nutzt wieder c.img für Kaktus-PNGs) ----------
 function renderInventory() {
   inventoryList.innerHTML = '';
   Object.values(CHARACTERS).forEach(c => {
@@ -516,24 +543,26 @@ function equipCharacter(id) {
   const c = CHARACTERS[id];
   if (!c || !c.unlocked || id === activeCharacterId) return;
   activeCharacterId = id;
+
   playerImg.src = c.img;
   cactusBtn.src = c.img;
+
   sfx.click();
   updateUI();
   saveGame();
 }
 
-// ---------- GAMBLING ----------
+// ---------- GAMBLING (Mit Emoji-Slots) ----------
 spinSlotBtn.addEventListener('click', () => {
   if (gold < 50) return;
   gold -= 50;
 
-  const icons = ['assets/cactus.png', 'assets/gem.png', 'assets/skull.png', 'assets/seven.png'];
+  const icons = ['🌵', '💎', '💀', '7️⃣'];
   const r1 = icons[Math.floor(Math.random() * icons.length)];
   const r2 = icons[Math.floor(Math.random() * icons.length)];
   const r3 = icons[Math.floor(Math.random() * icons.length)];
 
-  slotDisplay.innerHTML = `<img src="${r1}"> <img src="${r2}"> <img src="${r3}">`;
+  slotDisplay.innerHTML = `<span style="font-size:2rem; margin:0 5px;">${r1}</span> <span style="font-size:2rem; margin:0 5px;">${r2}</span> <span style="font-size:2rem; margin:0 5px;">${r3}</span>`;
   sfx.click();
 
   if (r1 === r2 && r2 === r3) {
@@ -568,6 +597,8 @@ openBoxBtn.addEventListener('click', () => {
 // ---------- ZUFALLS-EVENT ----------
 function triggerRandomEvent() {
   randomEventItem.classList.remove('hidden');
+  randomEventItem.textContent = "✨🎁✨";
+  randomEventItem.style.fontSize = "2rem";
   setTimeout(() => randomEventItem.classList.add('hidden'), 4000);
 }
 setInterval(() => { if (Math.random() < 0.4) triggerRandomEvent(); }, 12000);
@@ -585,7 +616,7 @@ randomEventItem.addEventListener('click', (e) => {
 
 // ---------- FLOATING TEXT ----------
 function createFloatingText(x, y, text, color = '#66fcf1') {
-  const el = document.createElement('div');
+  const el = document.color || document.createElement('div');
   el.className = 'floating-text';
   el.textContent = text;
   el.style.left = `${x - 20}px`;
