@@ -23,8 +23,8 @@
     <!-- DUNGEON SECTION -->
     <section id="dungeon-zone">
       <div class="header-info">
-        <span id="room-display" class="badge">Ebene: 1</span>
-        <span id="dps-display" class="badge">DPS: 0</span>
+        <span class="badge">Ebene: <span id="floor">1</span></span>
+        <span id="monster-type-badge" class="badge">Raum 1</span>
       </div>
 
       <div id="monster-info">
@@ -32,12 +32,13 @@
         <div class="hp-bar-container">
           <div id="monster-hp-bar"></div>
         </div>
-        <p id="monster-hp-text">0 / 0 HP</p>
+        <p id="monster-hp-text"><span id="monster-hp">0</span> / <span id="monster-max-hp">0</span> HP</p>
       </div>
 
       <!-- ARENA / DUNGEON RAUM -->
       <div id="arena" class="dungeon-room">
         <div class="room-door"></div>
+        <div id="crates-layer"></div>
         
         <!-- Spieler & Monster Einheiten -->
         <div id="player-entity">
@@ -67,22 +68,25 @@
       <!-- STATS BAR -->
       <div id="stats">
         <div class="stat-box">
-          💧 <span id="water-display">0</span>
+          💧 <span id="water">0</span>
         </div>
         <div class="stat-box">
-          🪙 <span id="gold-display">0</span>
+          🪙 <span id="gold">0</span>
+        </div>
+        <div class="stat-box">
+          ⚔️ SCH: <span id="power">1</span>
         </div>
       </div>
 
       <!-- ACTIVE CHARACTER INFO -->
       <div id="active-character-bar">
         Aktiv: <strong id="active-char-name">Kaktus</strong><br>
-        <span id="active-char-effect">Effekt: Normaler Kaktus</span>
+        <span id="active-char-ability">Keine Fähigkeit</span>
       </div>
 
       <!-- CLICK AREA -->
       <div id="click-area">
-        <img id="cactus-target" src="assets/cactus.png" alt="Kaktus Klicken" class="cactus-img">
+        <img id="cactus-clicker" src="assets/cactus.png" alt="Kaktus Klicken" class="cactus-img">
       </div>
 
       <!-- TABS -->
@@ -94,19 +98,14 @@
 
       <!-- TAB 1: UPGRADES -->
       <div id="tab-upgrades" class="tab-content active">
-        <button id="btn-upgrade-click" class="btn-action">
-          Nadel verfeinern (Klick +1)<br>
-          Kosten: <span id="cost-click">10</span> 💧
+        <button id="upgrade-water-btn" class="btn-action">
+          Wasser-Ertrag (+1/Klick)<br>
+          Kosten: <span id="cost-water">10</span> 💧
         </button>
         
-        <button id="btn-upgrade-passive" class="btn-action btn-gold">
-          Bewässerung (Passiv +1/s)<br>
-          Kosten: <span id="cost-passive">25</span> 💧
-        </button>
-
-        <button id="btn-upgrade-hero" class="btn-action btn-purple">
-          Helden-Upgrade (SCH +2)<br>
-          Kosten: <span id="cost-hero">50</span> 🪙
+        <button id="upgrade-power-btn" class="btn-action btn-gold">
+          Kaktus-Kraft (+1 SCH)<br>
+          Kosten: <span id="cost-power">15</span> 🪙
         </button>
       </div>
 
@@ -120,14 +119,15 @@
       <!-- TAB 3: CASINO -->
       <div id="tab-casino" class="tab-content">
         <div class="gamble-box">
-          <h4>🎰 Kaktus-Slot machine</h4>
+          <h4>🎰 Kaktus-Slot Machine</h4>
           <div id="slot-display">
-            <span id="slot1">🌵</span>
-            <span id="slot2">🌵</span>
-            <span id="slot3">🌵</span>
+            <span>🌵</span> <span>🌵</span> <span>🌵</span>
           </div>
-          <button id="btn-spin" class="btn-action btn-gold">
-            Drehen (Kosten: 100 💧)
+          <button id="spin-slot-btn" class="btn-action btn-gold">
+            Drehen (Kosten: 50 🪙)
+          </button>
+          <button id="open-box-btn" class="btn-action btn-purple" style="margin-top: 8px;">
+            Geheim-Kiste öffnen (Kosten: 100 💧)
           </button>
         </div>
       </div>
