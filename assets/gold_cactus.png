@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128" shape-rendering="crispEdges">
+  <!-- Topf -->
+  <rect x="20" y="48" width="24" height="12" fill="#B8860B" />
+  
+  <!-- Körper (Gold-Gelb) -->
+  <rect x="26" y="12" width="12" height="32" fill="#FFD700" />
+  <rect x="28" y="10" width="8" height="2" fill="#FFF8DC" />
+  <rect x="28" y="14" width="4" height="28" fill="#FFFFFF" opacity="0.6" /> <!-- Glanz -->
+
+  <!-- Arme -->
+  <rect x="16" y="24" width="10" height="4" fill="#FFD700" />
+  <rect x="38" y="28" width="10" height="4" fill="#FFD700" />
+
+  <!-- Funkeln -->
+  <rect x="12" y="14" width="2" height="2" fill="#FFFFFF" />
+  <rect x="48" y="18" width="2" height="2" fill="#FFFFFF" />
+  <rect x="22" y="38" width="2" height="2" fill="#FFFFFF" />
+
+  <!-- Sonnenbrille -->
+  <rect x="26" y="20" width="12" height="4" fill="#000000" />
+</svg>

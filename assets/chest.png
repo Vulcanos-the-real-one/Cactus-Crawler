@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128" shape-rendering="crispEdges">
+  <!-- Holz-Truhe -->
+  <rect x="12" y="24" width="40" height="28" fill="#8B4513" />
+  <rect x="14" y="26" width="36" height="24" fill="#A0522D" />
+
+  <!-- Metall-Beschläge (Eisen/Gold) -->
+  <rect x="12" y="24" width="40" height="4" fill="#DAA520" />
+  <rect x="12" y="36" width="40" height="4" fill="#B8860B" />
+  <rect x="12" y="48" width="40" height="4" fill="#DAA520" />
+  <rect x="18" y="24" width="4" height="28" fill="#B8860B" />
+  <rect x="42" y="24" width="4" height="28" fill="#B8860B" />
+
+  <!-- Schloss -->
+  <rect x="28" y="34" width="8" height="8" fill="#FFD700" />
+  <rect x="31" y="38" width="2" height="3" fill="#000000" />
+</svg>

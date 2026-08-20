@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128" shape-rendering="crispEdges">
+  <!-- Drachenkörper -->
+  <rect x="20" y="24" width="24" height="24" fill="#B22222" />
+  <rect x="24" y="20" width="16" height="8" fill="#B22222" />
+  
+  <!-- Flügel -->
+  <rect x="8" y="20" width="12" height="16" fill="#8B0000" />
+  <rect x="44" y="20" width="12" height="16" fill="#8B0000" />
+
+  <!-- Kopf & Hörner -->
+  <rect x="22" y="12" width="20" height="12" fill="#CD5C5C" />
+  <rect x="20" y="8" width="4" height="8" fill="#FFD700" />
+  <rect x="40" y="8" width="4" height="8" fill="#FFD700" />
+
+  <!-- Augen & Feuer-Atem -->
+  <rect x="26" y="16" width="4" height="4" fill="#FFD700" />
+  <rect x="34" y="16" width="4" height="4" fill="#FFD700" />
+  <rect x="28" y="28" width="8" height="16" fill="#FF8C00" />
+</svg>
