@@ -44,12 +44,10 @@ function getActive() { return CHARACTERS[activeCharacterId]; }
 
 // ---------- MONSTER DATENBANK ----------
 const MONSTER_TYPES = [
-  { name: "Wüsten-Schnecke", img: "assets/snail.png", hpMul: 1, goldMul: 1 },
-  { name: "Sand-Skorpion", img: "assets/scorpion.png", hpMul: 1.4, goldMul: 1.5 },
-  { name: "Stein-Golem", img: "assets/golem.png", hpMul: 2.2, goldMul: 2.5 },
-  { name: "BOSS: Kaktus-Drache", img: "assets/boss.png", hpMul: 4.5, goldMul: 6.0 }
+  { name: "Wüsten-Schnecke", hp: 25, goldReward: 15, emoji: "🐌" },
+  { name: "Stein-Golem", hp: 60, goldReward: 35, emoji: "🗿" },
+  { name: "Schatten-Drache", hp: 150, goldReward: 100, emoji: "🐉" }
 ];
-
 let currentMonster = MONSTER_TYPES[0];
 let monsterMaxHp = 20;
 let monsterHp = 20;
