@@ -3,52 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>CactusCrawler</title>
+  <title>Cactus Crawler</title>
+  <!-- Relativer Pfad ohne führenden Slash für GitHub Pages -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- Partikel Effekt Canvas -->
   <canvas id="particle-canvas"></canvas>
 
   <div id="game-container">
-    <div id="topbar">
-      <h1>🌵 CactusCrawler</h1>
-      <button id="sound-toggle-btn" class="icon-btn">🔊</button>
-    </div>
+    
+    <!-- TOPBAR -->
+    <header id="topbar">
+      <h1>🌵 CACTUS CRAWLER</h1>
+      <button id="btn-sound" class="icon-btn">🔊</button>
+    </header>
 
-    <!-- DUNGEON BEREICH -->
+    <!-- DUNGEON SECTION -->
     <section id="dungeon-zone">
       <div class="header-info">
-        <h2>Dungeon <span id="floor">1</span></h2>
-        <span id="monster-type-badge" class="badge">Raum 1</span>
+        <span id="room-display" class="badge">Ebene: 1</span>
+        <span id="dps-display" class="badge">DPS: 0</span>
       </div>
 
       <div id="monster-info">
-        <div id="monster-name">Wüsten-Schnecke</div>
+        <h2 id="monster-name">Gegner wird geladen...</h2>
         <div class="hp-bar-container">
           <div id="monster-hp-bar"></div>
         </div>
-        <p>HP: <span id="monster-hp">20</span> / <span id="monster-max-hp">20</span></p>
+        <p id="monster-hp-text">0 / 0 HP</p>
       </div>
 
+      <!-- ARENA / DUNGEON RAUM -->
       <div id="arena" class="dungeon-room">
-        <!-- Raumwand-Indikator oben -->
         <div class="room-door"></div>
-
-        <div id="crates-layer"></div>
-
+        
+        <!-- Spieler & Monster Einheiten -->
+        <div id="player-entity">
+          <img id="player-img" src="assets/cactus.png" alt="Player">
+        </div>
+        
         <div id="monster-entity">
           <img id="monster-img" src="assets/snail.png" alt="Monster">
         </div>
 
-        <div id="player-entity">
-          <img id="player-img" src="assets/cactus.png" alt="Dein Kaktus">
-        </div>
-
-        <div id="range-hint" class="hidden">Lauf näher ran! 🏃</div>
+        <div id="range-hint" class="hidden">Zu weit weg!</div>
       </div>
 
-      <p class="hint-text">Besiege das Monster im Raum, um die Belohnungskiste zu öffnen!</p>
+      <p id="dungeon-hint" class="hint-text">Bewege dich zum Monster, um automatisch zu greifen!</p>
 
+      <!-- JOYSTICK -->
       <div id="joystick-zone">
         <div id="joystick-base">
           <div id="joystick-knob"></div>
@@ -56,57 +61,87 @@
       </div>
     </section>
 
-    <!-- CLICKER BEREICH -->
+    <!-- CLICKER & UPGRADE SECTION -->
     <section id="clicker-zone">
+      
+      <!-- STATS BAR -->
       <div id="stats">
-        <div class="stat-box"><img src="assets/water.png" class="icon-img"> <span id="water">0</span></div>
-        <div class="stat-box"><img src="assets/gold.png" class="icon-img"> <span id="gold">0</span></div>
-        <div class="stat-box">🌵 PWR <span id="power">1</span></div>
+        <div class="stat-box">
+          💧 <span id="water-display">0</span>
+        </div>
+        <div class="stat-box">
+          🪙 <span id="gold-display">0</span>
+        </div>
       </div>
 
+      <!-- ACTIVE CHARACTER INFO -->
       <div id="active-character-bar">
-        Aktiv: <span id="active-char-name">Basis-Kaktus</span> — <span id="active-char-ability">Keine Fähigkeit</span>
+        Aktiv: <strong id="active-char-name">Kaktus</strong><br>
+        <span id="active-char-effect">Effekt: Normaler Kaktus</span>
       </div>
 
+      <!-- CLICK AREA -->
       <div id="click-area">
-        <img id="cactus-clicker" class="cactus-img" src="assets/cactus.png" alt="Kaktus">
+        <img id="cactus-target" src="assets/cactus.png" alt="Kaktus Klicken" class="cactus-img">
       </div>
 
+      <!-- TABS -->
       <div class="tab-buttons">
-        <button id="tab-upgrades-btn" class="tab-btn active">Upgrades</button>
-        <button id="tab-inventory-btn" class="tab-btn">🎒 Inventar</button>
-        <button id="tab-gamble-btn" class="tab-btn">🎰 Casino</button>
+        <button class="tab-btn active" onclick="switchTab('upgrades')">Upgrades</button>
+        <button class="tab-btn" onclick="switchTab('inventory')">Kanten</button>
+        <button class="tab-btn" onclick="switchTab('casino')">Casino</button>
       </div>
 
+      <!-- TAB 1: UPGRADES -->
       <div id="tab-upgrades" class="tab-content active">
-        <button id="upgrade-water-btn" class="btn-action">Besserer Gießer (+1 Wasser/Klick)<br>Kosten: <span id="cost-water">10</span> 💧</button>
-        <button id="upgrade-power-btn" class="btn-action">Stacheln schärfen (+1 PWR)<br>Kosten: <span id="cost-power">15</span> 🪙</button>
+        <button id="btn-upgrade-click" class="btn-action">
+          Nadel verfeinern (Klick +1)<br>
+          Kosten: <span id="cost-click">10</span> 💧
+        </button>
+        
+        <button id="btn-upgrade-passive" class="btn-action btn-gold">
+          Bewässerung (Passiv +1/s)<br>
+          Kosten: <span id="cost-passive">25</span> 💧
+        </button>
+
+        <button id="btn-upgrade-hero" class="btn-action btn-purple">
+          Helden-Upgrade (SCH +2)<br>
+          Kosten: <span id="cost-hero">50</span> 🪙
+        </button>
       </div>
 
+      <!-- TAB 2: INVENTAR / CHARAKTERE -->
       <div id="tab-inventory" class="tab-content">
-        <div id="inventory-list"></div>
+        <div id="inventory-list">
+          <!-- Dynamisch per JS befüllt -->
+        </div>
       </div>
 
-      <div id="tab-gamble" class="tab-content">
+      <!-- TAB 3: CASINO -->
+      <div id="tab-casino" class="tab-content">
         <div class="gamble-box">
-          <h4>Kaktus-Slots (50 🪙)</h4>
+          <h4>🎰 Kaktus-Slot machine</h4>
           <div id="slot-display">
-            <img src="assets/cactus.png"> <img src="assets/cactus.png"> <img src="assets/cactus.png">
+            <span id="slot1">🌵</span>
+            <span id="slot2">🌵</span>
+            <span id="slot3">🌵</span>
           </div>
-          <button id="spin-slot-btn" class="btn-action btn-gold">Drehen!</button>
-        </div>
-        <div class="gamble-box">
-          <h4>Mystery-Kiste (100 💧)</h4>
-          <button id="open-box-btn" class="btn-action btn-purple">Kiste öffnen 📦</button>
+          <button id="btn-spin" class="btn-action btn-gold">
+            Drehen (Kosten: 100 💧)
+          </button>
         </div>
       </div>
+
     </section>
 
-    <div id="random-event-item" class="hidden">
-      <img src="assets/star.png" alt="Event">
-    </div>
   </div>
 
+  <!-- ZUFALLSEVENT ITEM -->
+  <div id="random-event-item" class="hidden">
+    ⭐
+  </div>
+
+  <!-- Relativer Pfad für das Skript -->
   <script src="script.js"></script>
 </body>
 </html>
