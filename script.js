@@ -1,59 +1,116 @@
 // =========================================================
-// CACTUSCRAWLER — Kern-Logik (Kakteen als PNG / Monster als Emojis)
+// CACTUS CRAWLER — Core logic (cacti as PNG / monsters as emoji)
 // =========================================================
 
-// ---------- WÄHRUNGEN & FORTSCHRITT ----------
+// ---------- CURRENCIES & PROGRESS ----------
 let water = 0;
 let gold = 0;
 let floor = 1;
 
-// ---------- KAKTUS-CHARAKTERE (Mit PNG-Bildpfaden) ----------
+// ---------- STATS (used by the quest system) ----------
+let stats = {
+  monstersDefeated: 0,
+  floorsCleared: 1,
+  totalGoldEarned: 0,
+  chestsOpened: 0,
+  slotSpins: 0
+};
+
+// ---------- CACTUS CHARACTERS (with PNG image paths) ----------
+// Drop a matching PNG into the assets folder to change how each cactus looks.
+// Every cactus tracks its own hydration — it dries out a little with every
+// attack and needs to be refilled with water (in the Oasis tab) before it
+// can fight again.
 const CHARACTERS = {
-  basis: {
-    id: 'basis', name: 'Basis-Kaktus', img: 'assets/cactus.png',
-    unlocked: true, reqFloor: 1, ability: null, abilityName: 'Keine Fähigkeit',
-    abilityDesc: 'Zuverlässig und ausgeglichen — keine Spezialfähigkeit.',
+  basic: {
+    id: 'basic', name: 'Basic Cactus', img: 'assets/cactus.png',
+    unlocked: true, reqFloor: 1, ability: null, abilityName: 'No Ability',
+    abilityDesc: 'Reliable and balanced — no special ability.',
     waterPerClick: 1, waterUpgradeCost: 10,
-    cactusPower: 1, powerUpgradeCost: 15
+    cactusPower: 1, powerUpgradeCost: 15,
+    maxHydration: 100, hydration: 100, hydrationUpgradeCost: 40
   },
   ice: {
-    id: 'ice', name: 'Eis-Kaktus', img: 'assets/ice_cactus.png',
-    unlocked: false, reqFloor: 15, ability: 'freeze', abilityName: 'Frostschock ❄️',
-    abilityDesc: '25% Chance auf einen Frost-Kritischen Treffer (x2 Schaden).',
+    id: 'ice', name: 'Ice Cactus', img: 'assets/ice_cactus.png',
+    unlocked: false, reqFloor: 15, ability: 'freeze', abilityName: 'Frost Shock ❄️',
+    abilityDesc: '25% chance to land a frost critical hit (x2 damage).',
     waterPerClick: 1, waterUpgradeCost: 10,
-    cactusPower: 1, powerUpgradeCost: 15
+    cactusPower: 1, powerUpgradeCost: 15,
+    maxHydration: 100, hydration: 100, hydrationUpgradeCost: 40
   },
   electro: {
-    id: 'electro', name: 'Elektro-Kaktus', img: 'assets/electro_cactus.png',
-    unlocked: false, reqFloor: 25, ability: 'chain', abilityName: 'Kettenblitz ⚡',
-    abilityDesc: '20% Chance auf einen sofortigen zweiten Treffer.',
+    id: 'electro', name: 'Electro Cactus', img: 'assets/electro_cactus.png',
+    unlocked: false, reqFloor: 25, ability: 'chain', abilityName: 'Chain Lightning ⚡',
+    abilityDesc: '20% chance to immediately strike a second time.',
     waterPerClick: 1, waterUpgradeCost: 10,
-    cactusPower: 1, powerUpgradeCost: 15
+    cactusPower: 1, powerUpgradeCost: 15,
+    maxHydration: 100, hydration: 100, hydrationUpgradeCost: 40
   },
   fire: {
-    id: 'fire', name: 'Feuer-Kaktus', img: 'assets/fire_cactus.png',
-    unlocked: false, reqFloor: 35, ability: 'burn', abilityName: 'Verbrennen 🔥',
-    abilityDesc: '30% Chance, dem Monster einen Brand zufügen.',
+    id: 'fire', name: 'Fire Cactus', img: 'assets/fire_cactus.png',
+    unlocked: false, reqFloor: 35, ability: 'burn', abilityName: 'Burn 🔥',
+    abilityDesc: '30% chance to set the monster on fire.',
     waterPerClick: 1, waterUpgradeCost: 10,
-    cactusPower: 1, powerUpgradeCost: 15
+    cactusPower: 1, powerUpgradeCost: 15,
+    maxHydration: 100, hydration: 100, hydrationUpgradeCost: 40
+  },
+  trance: {
+    id: 'trance', name: 'Trance Cactus', img: 'assets/trance_cactus.png',
+    unlocked: false, reqFloor: 45, ability: 'trance', abilityName: 'Illusion Trance 🌀',
+    abilityDesc: 'Warps the dungeon into a hypnotic illusion disc and dries out 20% slower.',
+    waterPerClick: 1, waterUpgradeCost: 10,
+    cactusPower: 1, powerUpgradeCost: 15,
+    maxHydration: 100, hydration: 100, hydrationUpgradeCost: 40
+  },
+  robber: {
+    id: 'robber', name: 'Robber Cactus', img: 'assets/robber_cactus.png',
+    unlocked: false, reqFloor: 55, ability: 'robber', abilityName: 'Heist Strike 🥷',
+    abilityDesc: 'Deals double damage, but defeated monsters drop no gold.',
+    waterPerClick: 1, waterUpgradeCost: 10,
+    cactusPower: 1, powerUpgradeCost: 15,
+    maxHydration: 100, hydration: 100, hydrationUpgradeCost: 40
   }
 };
-let activeCharacterId = 'basis';
+let activeCharacterId = 'basic';
 function getActive() { return CHARACTERS[activeCharacterId]; }
 
-// ---------- MONSTER DATENBANK (Als Emojis) ----------
+// ---------- MONSTER DATABASE (as emoji) ----------
 const MONSTER_TYPES = [
-  { name: "Wüsten-Schnecke", emoji: "🐌", hpMul: 1.0, goldMul: 1.0 },
-  { name: "Stein-Golem", emoji: "🗿", hpMul: 1.5, goldMul: 1.4 },
-  { name: "Schatten-Drache", emoji: "🐉", hpMul: 2.2, goldMul: 2.0 },
-  { name: "Wüsten-Dämon (BOSS)", emoji: "👹", hpMul: 3.5, goldMul: 3.5 }
+  { name: "Desert Snail", emoji: "🐌", hpMul: 1.0, goldMul: 1.0 },
+  { name: "Stone Golem", emoji: "🗿", hpMul: 1.5, goldMul: 1.4 },
+  { name: "Shadow Dragon", emoji: "🐉", hpMul: 2.2, goldMul: 2.0 },
+  { name: "Desert Fiend (BOSS)", emoji: "👹", hpMul: 3.5, goldMul: 3.5 }
 ];
 let currentMonster = MONSTER_TYPES[0];
 let monsterMaxHp = 20;
 let monsterHp = 20;
 let monsterInstanceId = 0;
 
-// ---------- DOM ELEMENTE ----------
+// ---------- TEMPORARY BOOSTS (bought in the Oasis) ----------
+let waterBoostMultiplier = 1;
+let waterBoostEndTime = 0;
+let powerBoostMultiplier = 1;
+let powerBoostEndTime = 0;
+
+// ---------- QUESTS ----------
+function makeQuest(type, target, rewardGold, rewardWater) {
+  return {
+    id: type + '_' + target + '_' + Math.random().toString(36).slice(2, 7),
+    type, target,
+    rewardGold: rewardGold || 0,
+    rewardWater: rewardWater || 0,
+    completed: false
+  };
+}
+let activeQuests = [
+  makeQuest('monstersDefeated', 10, 50, 0),
+  makeQuest('floorsCleared', 5, 80, 0),
+  makeQuest('totalGoldEarned', 500, 0, 100),
+  makeQuest('chestsOpened', 5, 60, 0),
+  makeQuest('slotSpins', 10, 100, 0)
+];
+
+// ---------- DOM ELEMENTS ----------
 const waterEl = document.getElementById('water');
 const goldEl = document.getElementById('gold');
 const powerEl = document.getElementById('power');
@@ -83,8 +140,15 @@ const soundToggleBtn = document.getElementById('sound-toggle-btn');
 const activeCharNameEl = document.getElementById('active-char-name');
 const activeCharAbilityEl = document.getElementById('active-char-ability');
 const inventoryList = document.getElementById('inventory-list');
+const oasisList = document.getElementById('oasis-list');
+const questsList = document.getElementById('quests-list');
 
-// Hilfsfunktion: Wandelt ein <img> visuell in ein Emoji-Text-Feld um (für Monster)
+const hydrationBar = document.getElementById('hydration-bar');
+const hydrationText = document.getElementById('hydration-text');
+const quickRefillBtn = document.getElementById('quick-refill-btn');
+const refillCostEl = document.getElementById('refill-cost');
+
+// Helper function: visually turns an <img> into an emoji text field (for monsters)
 function setMonsterEmoji(el, emojiStr) {
   if (!el) return;
   if (el.tagName === 'IMG') {
@@ -105,7 +169,7 @@ function setMonsterEmoji(el, emojiStr) {
   }
 }
 
-// ---------- CANVAS PARTIKEL-SYSTEM ----------
+// ---------- CANVAS PARTICLE SYSTEM ----------
 const canvas = document.getElementById('particle-canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
@@ -178,7 +242,8 @@ const sfx = {
   crate: () => { tone(400, 0.06, 'square', 0.1); tone(600, 0.08, 'square', 0.1, 0.05); },
   unlock: () => { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.14, 'triangle', 0.12, i * 0.09)); },
   error: () => tone(120, 0.15, 'sawtooth', 0.1),
-  upgrade: () => { tone(440, 0.06, 'triangle', 0.1); tone(660, 0.08, 'triangle', 0.1, 0.05); }
+  upgrade: () => { tone(440, 0.06, 'triangle', 0.1); tone(660, 0.08, 'triangle', 0.1, 0.05); },
+  splash: () => { tone(380, 0.06, 'sine', 0.12); tone(560, 0.08, 'sine', 0.12, 0.05); }
 };
 
 soundToggleBtn.addEventListener('click', () => {
@@ -189,12 +254,13 @@ soundToggleBtn.addEventListener('click', () => {
 });
 window.addEventListener('pointerdown', ensureAudio, { once: true });
 
-// ---------- SPEICHERSTAND ----------
-const SAVE_KEY = 'cactuscrawler_save_v2';
+// ---------- SAVE DATA ----------
+const SAVE_KEY = 'cactuscrawler_save_v3';
 function saveGame() {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      water, gold, floor, activeCharacterId, muted, characters: CHARACTERS
+      water, gold, floor, activeCharacterId, muted,
+      characters: CHARACTERS, stats, activeQuests
     }));
   } catch (e) {}
 }
@@ -206,13 +272,15 @@ function loadGame() {
     water = d.water ?? 0;
     gold = d.gold ?? 0;
     floor = d.floor ?? 1;
-    activeCharacterId = d.activeCharacterId || 'basis';
+    activeCharacterId = d.activeCharacterId || 'basic';
     muted = !!d.muted;
     if (d.characters) {
       Object.keys(d.characters).forEach(k => {
         if (CHARACTERS[k]) Object.assign(CHARACTERS[k], d.characters[k]);
       });
     }
+    if (d.stats) Object.assign(stats, d.stats);
+    if (Array.isArray(d.activeQuests) && d.activeQuests.length) activeQuests = d.activeQuests;
   } catch (e) {}
 }
 
@@ -221,7 +289,7 @@ function checkCharacterUnlocks() {
   Object.values(CHARACTERS).forEach(c => {
     if (!c.unlocked && floor >= c.reqFloor) {
       c.unlocked = true;
-      createFloatingText(window.innerWidth / 2, window.innerHeight / 2, `NEU: ${c.name}! 🎉`, '#66fcf1');
+      createFloatingText(window.innerWidth / 2, window.innerHeight / 2, `NEW: ${c.name}! 🎉`, '#66fcf1');
       sfx.unlock();
     }
   });
@@ -230,7 +298,9 @@ function checkCharacterUnlocks() {
 // ---------- TABS SYSTEM ----------
 document.getElementById('tab-upgrades-btn').addEventListener('click', (e) => switchTab(e, 'tab-upgrades'));
 document.getElementById('tab-inventory-btn').addEventListener('click', (e) => switchTab(e, 'tab-inventory'));
-document.getElementById('tab-gamble-btn').addEventListener('click', (e) => switchTab(e, 'tab-gamble'));
+document.getElementById('tab-oasis-btn').addEventListener('click', (e) => switchTab(e, 'tab-oasis'));
+document.getElementById('tab-quests-btn').addEventListener('click', (e) => switchTab(e, 'tab-quests'));
+document.getElementById('tab-gamble-btn').addEventListener('click', (e) => switchTab(e, 'tab-casino'));
 
 function switchTab(e, tabId) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -240,17 +310,18 @@ function switchTab(e, tabId) {
   sfx.click();
 }
 
-// ---------- KLICKER ----------
+// ---------- CLICKER ----------
 cactusBtn.addEventListener('click', (e) => {
   const active = getActive();
-  water += active.waterPerClick;
-  createFloatingText(e.clientX, e.clientY, `+${active.waterPerClick} 💧`, '#66fcf1');
+  const gained = Math.max(1, Math.round(active.waterPerClick * waterBoostMultiplier));
+  water += gained;
+  createFloatingText(e.clientX, e.clientY, `+${gained} 💧`, '#66fcf1');
   spawnParticles(e.clientX, e.clientY, '#66fcf1', 8);
   sfx.click();
   updateUI();
 });
 
-// ---------- BEWEGUNG ----------
+// ---------- MOVEMENT ----------
 const player = { x: 20, y: 120, speed: 150, facingLeft: false };
 let monsterRatio = { x: 0.5, y: 0.5 };
 const ATTACK_RANGE = 70;
@@ -340,17 +411,40 @@ function positionMonster() {
 }
 window.addEventListener('resize', positionMonster);
 
-// ---------- KAMPF ----------
+// Picks a random spot for the monster to spawn at, so you actually have to
+// walk over to it instead of it always waiting in the same place.
+function randomMonsterRatio() {
+  return {
+    x: 0.15 + Math.random() * 0.7,
+    y: 0.28 + Math.random() * 0.55
+  };
+}
+
+// ---------- COMBAT ----------
 if (monsterEntity) {
   monsterEntity.addEventListener('pointerdown', (e) => { e.stopPropagation(); tryAttack(); });
 }
 
 function tryAttack() {
   if (monsterHp <= 0) return;
+  const active = getActive();
+
+  if (active.hydration <= 0) {
+    rangeHint.textContent = 'Cactus dried out! Refill it in the Oasis.';
+    rangeHint.classList.remove('hidden');
+    sfx.error();
+    setTimeout(() => {
+      rangeHint.classList.add('hidden');
+      rangeHint.textContent = 'Too far away!';
+    }, 1200);
+    return;
+  }
+
   const mPos = getMonsterPixelPos();
   const dist = Math.hypot((player.x - mPos.x), (player.y - mPos.y));
 
   if (dist > ATTACK_RANGE) {
+    rangeHint.textContent = 'Too far away!';
     rangeHint.classList.remove('hidden');
     sfx.error();
     setTimeout(() => rangeHint.classList.add('hidden'), 700);
@@ -371,23 +465,50 @@ function performAttack() {
   const cy = rect.top + rect.height / 2;
   const myMonsterId = monsterInstanceId;
 
-  let damage = active.cactusPower;
+  const basePower = active.cactusPower * powerBoostMultiplier;
+  let damage = basePower;
   let labels = [];
 
-  if (active.ability === 'freeze' && Math.random() < 0.25) { damage *= 2; labels.push('❄️ Frost-Krit!'); sfx.ability(); }
-  if (active.ability === 'burn' && Math.random() < 0.30) { labels.push('🔥 Verbrannt!'); sfx.ability(); burnDot(myMonsterId, Math.max(1, Math.ceil(active.cactusPower * 0.4))); }
+  if (active.ability === 'freeze' && Math.random() < 0.25) {
+    damage *= 2;
+    labels.push('❄️ Frost Crit!');
+    sfx.ability();
+  }
+  if (active.ability === 'robber') {
+    damage *= 2;
+  }
+  damage = Math.max(1, Math.round(damage));
+
+  if (active.ability === 'burn' && Math.random() < 0.30) {
+    labels.push('🔥 Burned!');
+    sfx.ability();
+    burnDot(myMonsterId, Math.max(1, Math.ceil(basePower * 0.4)));
+  }
   if (active.ability === 'chain' && Math.random() < 0.20) {
-    labels.push('⚡ Kettenblitz!'); sfx.ability();
-    setTimeout(() => { if (monsterInstanceId === myMonsterId) dealDamage(active.cactusPower, cx, cy); }, 150);
+    labels.push('⚡ Chain Lightning!');
+    sfx.ability();
+    setTimeout(() => {
+      if (monsterInstanceId === myMonsterId) dealDamage(Math.max(1, Math.round(basePower)), cx, cy);
+    }, 150);
   }
 
   dealDamage(damage, cx, cy);
   labels.forEach((label, i) => setTimeout(() => createFloatingText(cx, cy - 40, label, '#f1c40f'), i * 120));
 
+  // The equipped cactus dries out a little with every attack — the harder it
+  // hits, the thirstier it gets. Refill it with water in the Oasis tab.
+  let hydrationCost = Math.max(1, Math.round(damage / 4));
+  if (active.ability === 'trance') hydrationCost = Math.max(1, Math.round(hydrationCost * 0.8));
+  active.hydration = Math.max(0, active.hydration - hydrationCost);
+  if (active.hydration === 0) {
+    createFloatingText(cx, cy - 60, '🥀 Dried out!', '#e67e22');
+  }
+
   dungeonZone.classList.add('shake');
   monsterEntity.classList.add('hit-flash');
   setTimeout(() => { dungeonZone.classList.remove('shake'); monsterEntity.classList.remove('hit-flash'); }, 120);
   sfx.hit();
+  updateUI();
 }
 
 function burnDot(targetMonsterId, tickDamage) {
@@ -409,12 +530,21 @@ function dealDamage(amount, x, y, isDot = false) {
   if (monsterHp <= 0) {
     monsterHp = 0;
     monsterEntity.classList.add('hidden');
-    let reward = Math.floor(floor * 8 * currentMonster.goldMul);
-    gold += reward;
-    createFloatingText(x, y - 30, `+${reward} GOLD! 🪙`, '#f1c40f');
-    sfx.death();
+    stats.monstersDefeated++;
 
-    // Raum geklärt -> Belohnungskiste freischalten
+    const active = getActive();
+    if (active.ability === 'robber') {
+      createFloatingText(x, y - 30, `No loot this time! 🏃`, '#9fb3bf');
+    } else {
+      let reward = Math.floor(floor * 8 * currentMonster.goldMul);
+      gold += reward;
+      stats.totalGoldEarned += reward;
+      createFloatingText(x, y - 30, `+${reward} GOLD! 🪙`, '#f1c40f');
+    }
+    sfx.death();
+    checkQuests();
+
+    // Room cleared -> unlock the reward chest
     spawnRoomChest();
   }
   updateUI();
@@ -429,21 +559,21 @@ function spawnMonster() {
     monsterBadge.textContent = "BOSS";
   } else {
     currentMonster = MONSTER_TYPES[Math.floor(Math.random() * 3)];
-    monsterBadge.textContent = "Raum " + floor;
+    monsterBadge.textContent = "Room " + floor;
   }
 
-  // Monster-Emoji statt Bild setzen
+  // Set the monster's emoji instead of an image
   setMonsterEmoji(monsterImg, currentMonster.emoji);
   monsterName.textContent = currentMonster.name;
 
   monsterMaxHp = Math.floor(20 * Math.pow(1.28, floor - 1) * currentMonster.hpMul);
   monsterHp = monsterMaxHp;
 
-  monsterRatio = { x: 0.5, y: 0.55 };
+  monsterRatio = randomMonsterRatio();
   positionMonster();
 }
 
-// ---------- RAUM-KISTE (Emoji-Kiste) ----------
+// ---------- ROOM CHEST (emoji chest) ----------
 function spawnRoomChest() {
   cratesLayer.innerHTML = '';
   const crate = document.createElement('div');
@@ -469,15 +599,19 @@ function openRoomChest(crateEl) {
   const waterWin = Math.floor(15 + floor * 4);
   gold += goldWin;
   water += waterWin;
+  stats.totalGoldEarned += goldWin;
+  stats.chestsOpened++;
 
   createFloatingText(cx, cy, `+${goldWin} 🪙 +${waterWin} 💧`, '#f1c40f');
   spawnParticles(cx, cy, '#f1c40f', 20);
   sfx.crate();
 
-  // Nächste Ebene betreten
+  // Enter the next floor
   floor++;
+  stats.floorsCleared = floor;
   checkCharacterUnlocks();
   spawnMonster();
+  checkQuests();
   updateUI();
   saveGame();
 }
@@ -507,7 +641,199 @@ upgradePowerBtn.addEventListener('click', () => {
   }
 });
 
-// ---------- INVENTAR (Nutzt wieder c.img für Kaktus-PNGs) ----------
+// ---------- HYDRATION SYSTEM ----------
+function refillHydration(id) {
+  const c = CHARACTERS[id];
+  if (!c) return;
+  const cost = Math.ceil((c.maxHydration - c.hydration) * 0.6);
+  if (c.hydration >= c.maxHydration || water < cost) return;
+  water -= cost;
+  c.hydration = c.maxHydration;
+  sfx.splash();
+  updateUI();
+  saveGame();
+}
+
+function refillAllHydration() {
+  const unlocked = Object.values(CHARACTERS).filter(c => c.unlocked);
+  const totalMissing = unlocked.reduce((sum, c) => sum + (c.maxHydration - c.hydration), 0);
+  const cost = Math.ceil(totalMissing * 0.5);
+  if (totalMissing <= 0 || water < cost) return;
+  water -= cost;
+  unlocked.forEach(c => { c.hydration = c.maxHydration; });
+  sfx.splash();
+  updateUI();
+  saveGame();
+}
+
+quickRefillBtn.addEventListener('click', () => refillHydration(activeCharacterId));
+
+// ---------- OASIS SHOP ----------
+function buyHydrationUpgrade() {
+  const active = getActive();
+  const cost = active.hydrationUpgradeCost || 40;
+  if (gold < cost) return;
+  gold -= cost;
+  active.maxHydration += 20;
+  active.hydration = Math.min(active.hydration + 20, active.maxHydration);
+  active.hydrationUpgradeCost = Math.floor(cost * 1.7);
+  sfx.upgrade();
+  updateUI();
+  saveGame();
+}
+
+function buyWaterSurge() {
+  if (gold < 40 || Date.now() < waterBoostEndTime) return;
+  gold -= 40;
+  waterBoostMultiplier = 2;
+  waterBoostEndTime = Date.now() + 30000;
+  sfx.ability();
+  updateUI();
+  saveGame();
+}
+
+function buyPowerSpring() {
+  if (gold < 60 || Date.now() < powerBoostEndTime) return;
+  gold -= 60;
+  powerBoostMultiplier = 1.5;
+  powerBoostEndTime = Date.now() + 30000;
+  sfx.ability();
+  updateUI();
+  saveGame();
+}
+
+function renderOasis() {
+  oasisList.innerHTML = '';
+  const active = getActive();
+
+  // Refill active cactus
+  const refillCost = Math.ceil((active.maxHydration - active.hydration) * 0.6);
+  const refillBtn = document.createElement('button');
+  refillBtn.className = 'btn-action btn-blue';
+  refillBtn.disabled = active.hydration >= active.maxHydration || water < refillCost;
+  refillBtn.innerHTML = `<span>💧 Refill ${active.name}</span><span>Cost: ${refillCost} 💧</span>`;
+  refillBtn.addEventListener('click', () => refillHydration(activeCharacterId));
+  oasisList.appendChild(refillBtn);
+
+  // Refill every unlocked cactus at once
+  const unlockedChars = Object.values(CHARACTERS).filter(c => c.unlocked);
+  const totalMissing = unlockedChars.reduce((sum, c) => sum + (c.maxHydration - c.hydration), 0);
+  const refillAllCost = Math.ceil(totalMissing * 0.5);
+  const refillAllBtn = document.createElement('button');
+  refillAllBtn.className = 'btn-action btn-blue';
+  refillAllBtn.disabled = totalMissing <= 0 || water < refillAllCost;
+  refillAllBtn.innerHTML = `<span>💧 Refill All Cacti</span><span>Cost: ${refillAllCost} 💧</span>`;
+  refillAllBtn.addEventListener('click', refillAllHydration);
+  oasisList.appendChild(refillAllBtn);
+
+  // Permanent max hydration upgrade
+  const hydCost = active.hydrationUpgradeCost || 40;
+  const hydBtn = document.createElement('button');
+  hydBtn.className = 'btn-action btn-gold';
+  hydBtn.disabled = gold < hydCost;
+  hydBtn.innerHTML = `<span>🌵 Max Hydration +20</span><span>Cost: ${hydCost} 🪙</span>`;
+  hydBtn.addEventListener('click', buyHydrationUpgrade);
+  oasisList.appendChild(hydBtn);
+
+  // Water Surge boost
+  const surgeActive = Date.now() < waterBoostEndTime;
+  const surgeBtn = document.createElement('button');
+  surgeBtn.className = 'btn-action';
+  surgeBtn.disabled = surgeActive || gold < 40;
+  surgeBtn.innerHTML = surgeActive
+    ? `<span>💧 Water Surge Active</span><span>${Math.ceil((waterBoostEndTime - Date.now()) / 1000)}s left</span>`
+    : `<span>💧 Water Surge (x2, 30s)</span><span>Cost: 40 🪙</span>`;
+  surgeBtn.addEventListener('click', buyWaterSurge);
+  oasisList.appendChild(surgeBtn);
+
+  // Power Spring boost
+  const powerActive = Date.now() < powerBoostEndTime;
+  const powerBtn = document.createElement('button');
+  powerBtn.className = 'btn-action btn-gold';
+  powerBtn.disabled = powerActive || gold < 60;
+  powerBtn.innerHTML = powerActive
+    ? `<span>⚔️ Power Spring Active</span><span>${Math.ceil((powerBoostEndTime - Date.now()) / 1000)}s left</span>`
+    : `<span>⚔️ Power Spring (+50% PWR, 30s)</span><span>Cost: 60 🪙</span>`;
+  powerBtn.addEventListener('click', buyPowerSpring);
+  oasisList.appendChild(powerBtn);
+}
+
+function tickBoosts() {
+  let changed = false;
+  if (waterBoostMultiplier !== 1 && Date.now() >= waterBoostEndTime) { waterBoostMultiplier = 1; changed = true; }
+  if (powerBoostMultiplier !== 1 && Date.now() >= powerBoostEndTime) { powerBoostMultiplier = 1; changed = true; }
+  if (changed || Date.now() < waterBoostEndTime || Date.now() < powerBoostEndTime) {
+    renderOasis();
+  }
+}
+
+// ---------- QUEST SYSTEM ----------
+function questLabel(q) {
+  const labels = {
+    monstersDefeated: `Defeat ${q.target} monsters`,
+    floorsCleared: `Reach floor ${q.target}`,
+    totalGoldEarned: `Earn a total of ${q.target} gold`,
+    chestsOpened: `Open ${q.target} treasure chests`,
+    slotSpins: `Spin the slot machine ${q.target} times`
+  };
+  return labels[q.type] || 'Unknown quest';
+}
+
+function generateNextQuest(type, prevTarget) {
+  let newTarget, rewardGold = 0, rewardWater = 0;
+  switch (type) {
+    case 'monstersDefeated': newTarget = prevTarget + 25; rewardGold = newTarget * 3; break;
+    case 'floorsCleared': newTarget = prevTarget + 10; rewardGold = newTarget * 15; break;
+    case 'totalGoldEarned': newTarget = Math.round(prevTarget * 1.8); rewardWater = Math.round(newTarget * 0.3); break;
+    case 'chestsOpened': newTarget = prevTarget + 5; rewardGold = newTarget * 12; break;
+    case 'slotSpins': newTarget = prevTarget + 10; rewardGold = newTarget * 8; break;
+    default: newTarget = prevTarget + 10; rewardGold = 50;
+  }
+  return makeQuest(type, newTarget, rewardGold, rewardWater);
+}
+
+function checkQuests() {
+  activeQuests.forEach((q, idx) => {
+    if (q.completed) return;
+    if ((stats[q.type] || 0) >= q.target) {
+      q.completed = true;
+      gold += q.rewardGold || 0;
+      water += q.rewardWater || 0;
+      createFloatingText(window.innerWidth / 2, window.innerHeight / 2, `✅ Quest complete!`, '#66fcf1');
+      sfx.unlock();
+      setTimeout(() => {
+        activeQuests[idx] = generateNextQuest(q.type, q.target);
+        renderQuests();
+        saveGame();
+      }, 1400);
+      updateUI();
+    }
+  });
+}
+
+function renderQuests() {
+  questsList.innerHTML = '';
+  activeQuests.forEach(q => {
+    const progress = Math.min(stats[q.type] || 0, q.target);
+    const percent = Math.min(100, (progress / q.target) * 100);
+    const card = document.createElement('div');
+    card.className = 'quest-card' + (q.completed ? ' completed' : '');
+    card.innerHTML = `
+      <div class="quest-desc">${q.completed ? '✅ ' : ''}${questLabel(q)}</div>
+      <div class="quest-bar-container"><div class="quest-bar" style="width:${percent}%"></div></div>
+      <div class="quest-progress">${progress} / ${q.target}</div>
+      <div class="quest-reward">Reward: ${q.rewardGold ? '+' + q.rewardGold + ' 🪙 ' : ''}${q.rewardWater ? '+' + q.rewardWater + ' 💧' : ''}</div>
+    `;
+    questsList.appendChild(card);
+  });
+}
+
+// ---------- BACKGROUND / TRANCE MODE ----------
+function updateBackgroundMode() {
+  arena.classList.toggle('trance-mode', activeCharacterId === 'trance');
+}
+
+// ---------- INVENTORY (uses c.img for cactus PNGs again) ----------
 function renderInventory() {
   inventoryList.innerHTML = '';
   Object.values(CHARACTERS).forEach(c => {
@@ -523,15 +849,15 @@ function renderInventory() {
     const info = document.createElement('div');
     info.className = 'inv-info';
     info.innerHTML = `
-      <div class="inv-name">${c.unlocked ? c.name : '🔒 Ab Ebene ' + c.reqFloor}</div>
-      <div class="inv-ability">${c.unlocked ? c.abilityDesc : 'Erreiche Ebene ' + c.reqFloor + ', um diesen Kaktus freizuschalten!'}</div>
-      ${c.unlocked ? `<div class="inv-stats">PWR ${c.cactusPower} · 💧 ${c.waterPerClick}/Klick</div>` : ''}
+      <div class="inv-name">${c.unlocked ? c.name : '🔒 From floor ' + c.reqFloor}</div>
+      <div class="inv-ability">${c.unlocked ? c.abilityDesc : 'Reach floor ' + c.reqFloor + ' to unlock this cactus!'}</div>
+      ${c.unlocked ? `<div class="inv-stats">PWR ${c.cactusPower} · 💧 ${c.waterPerClick}/click · 🌵 ${c.hydration}/${c.maxHydration}</div>` : ''}
     `;
 
     const btn = document.createElement('button');
     btn.className = 'btn-action inv-equip-btn';
     btn.disabled = !c.unlocked || isEquipped;
-    btn.textContent = isEquipped ? 'Ausgerüstet' : (c.unlocked ? 'Ausrüsten' : '🔒');
+    btn.textContent = isEquipped ? 'Equipped' : (c.unlocked ? 'Equip' : '🔒');
     btn.addEventListener('click', () => equipCharacter(c.id));
 
     card.append(img, info, btn);
@@ -546,16 +872,18 @@ function equipCharacter(id) {
 
   playerImg.src = c.img;
   cactusBtn.src = c.img;
+  updateBackgroundMode();
 
   sfx.click();
   updateUI();
   saveGame();
 }
 
-// ---------- GAMBLING (Mit Emoji-Slots) ----------
+// ---------- GAMBLING (with emoji slots) ----------
 spinSlotBtn.addEventListener('click', () => {
   if (gold < 50) return;
   gold -= 50;
+  stats.slotSpins++;
 
   const icons = ['🌵', '💎', '💀', '7️⃣'];
   const r1 = icons[Math.floor(Math.random() * icons.length)];
@@ -567,12 +895,15 @@ spinSlotBtn.addEventListener('click', () => {
 
   if (r1 === r2 && r2 === r3) {
     gold += 500;
+    stats.totalGoldEarned += 500;
     sfx.unlock();
     alert("JACKPOT! +500 Gold! 🎉");
   } else if (r1 === r2 || r2 === r3 || r1 === r3) {
     gold += 75;
+    stats.totalGoldEarned += 75;
     sfx.gold();
   }
+  checkQuests();
   updateUI();
   saveGame();
 });
@@ -584,17 +915,18 @@ openBoxBtn.addEventListener('click', () => {
   if (Math.random() > 0.5) {
     let winGold = Math.floor(gold * 0.5) + 20;
     gold += winGold;
+    stats.totalGoldEarned += winGold;
     sfx.gold();
-    alert(`Gewinn! Du findest ${winGold} Gold!`);
+    alert(`You win! You found ${winGold} gold!`);
   } else {
     sfx.error();
-    alert("Niete! Nur etwas Staub... 💨");
+    alert("Bust! Just some dust... 💨");
   }
   updateUI();
   saveGame();
 });
 
-// ---------- ZUFALLS-EVENT ----------
+// ---------- RANDOM EVENT ----------
 function triggerRandomEvent() {
   randomEventItem.classList.remove('hidden');
   randomEventItem.textContent = "✨🎁✨";
@@ -606,6 +938,7 @@ setInterval(() => { if (Math.random() < 0.4) triggerRandomEvent(); }, 12000);
 randomEventItem.addEventListener('click', (e) => {
   let bonus = floor * 15;
   gold += bonus;
+  stats.totalGoldEarned += bonus;
   createFloatingText(e.clientX, e.clientY, `+${bonus} GOLD! ✨`, '#f1c40f');
   spawnParticles(e.clientX, e.clientY, '#f1c40f', 20);
   randomEventItem.classList.add('hidden');
@@ -616,7 +949,7 @@ randomEventItem.addEventListener('click', (e) => {
 
 // ---------- FLOATING TEXT ----------
 function createFloatingText(x, y, text, color = '#66fcf1') {
-  const el = document.color || document.createElement('div');
+  const el = document.createElement('div');
   el.className = 'floating-text';
   el.textContent = text;
   el.style.left = `${x - 20}px`;
@@ -645,6 +978,15 @@ function updateUI() {
   activeCharNameEl.textContent = active.name;
   activeCharAbilityEl.textContent = active.abilityName;
 
+  // Hydration bar for the equipped cactus
+  const hydPercent = Math.max(0, (active.hydration / active.maxHydration) * 100);
+  hydrationBar.style.width = hydPercent + '%';
+  hydrationBar.classList.toggle('low', hydPercent <= 25);
+  hydrationText.textContent = `${active.hydration}/${active.maxHydration}`;
+  const refillCostNow = Math.ceil((active.maxHydration - active.hydration) * 0.6);
+  refillCostEl.textContent = refillCostNow;
+  quickRefillBtn.disabled = active.hydration >= active.maxHydration || water < refillCostNow;
+
   document.getElementById('floor').textContent = floor;
   monsterHpEl.textContent = monsterHp;
   monsterMaxHpEl.textContent = monsterMaxHp;
@@ -655,15 +997,19 @@ function updateUI() {
   soundToggleBtn.textContent = muted ? '🔇' : '🔊';
 
   renderInventory();
+  renderOasis();
+  renderQuests();
 }
 
-// ---------- INITIALISIERUNG ----------
+// ---------- INITIALIZATION ----------
 loadGame();
 checkCharacterUnlocks();
 playerImg.src = getActive().img;
 cactusBtn.src = getActive().img;
+updateBackgroundMode();
 spawnMonster();
 updateUI();
 
 setInterval(saveGame, 10000);
+setInterval(tickBoosts, 1000);
 window.addEventListener('beforeunload', saveGame);
